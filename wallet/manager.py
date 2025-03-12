@@ -9,22 +9,26 @@ from wallet.encryption import (
     decrypt
 )
 
-class DuplicateNameError(Exception):
+
+class WalletManagerError(Exception):
     pass
 
-class DuplicateAddressError(Exception):
+class DuplicateNameError(WalletManagerError):
     pass
 
-class DuplicateWalletError(Exception):
+class DuplicateAddressError(WalletManagerError):
     pass
 
-class WalletNotFoundError(Exception):
+class DuplicateWalletError(WalletManagerError):
     pass
 
-class WrongPasswordError(Exception):
+class WalletNotFoundError(WalletManagerError):
     pass
 
-class InvalidSeedError(Exception):
+class WrongPasswordError(WalletManagerError):
+    pass
+
+class InvalidSeedError(WalletManagerError):
     pass
 
 

@@ -4,13 +4,8 @@ import click
 from wallet.store import DataBase
 
 from wallet.manager import (
-    InvalidSeedError,
     WalletManager,
-    DuplicateAddressError,
-    DuplicateWalletError,
-    DuplicateNameError,
-    WalletNotFoundError,
-    WrongPasswordError,
+    WalletManagerError,
 )
 
 from wallet.wallet import XWallet
@@ -31,12 +26,8 @@ def wallet_generate(manager: WalletManager,wallet_name:str,password:str):
     wallet = XWallet.create()
     try:
         manager.save_wallet(wallet,wallet_name,password)
-    except DuplicateNameError:
-        click.echo('a wallet with the same name exists. try another name')
-    except DuplicateAddressError:
-        click.echo('a wallet with the same address exists. try another seed')
-    except DuplicateWalletError:
-        click.echo('the wallet already exists.')
+    except WalletManagerError as e:
+        click.echo(e)
  
 
 @cli.command()
@@ -47,10 +38,8 @@ def wallet_show(manager: WalletManager,wallet_name:str,password:str):
     try:
         wallet = manager.load_wallet(wallet_name,password)
         print(wallet)
-    except WalletNotFoundError:
-        click.echo('wallet not found.')
-    except WrongPasswordError:
-        click.echo('wrong password.')
+    except WalletManagerError as e:
+        click.echo(e)
 
 
 # TODO: handle importing secret numbers,private keys, and mnemonic phrases
@@ -64,11 +53,5 @@ def wallet_import(manager: WalletManager,wallet_name:str,seed:str,password:str):
     try:
         wallet = manager.import_wallet(wallet_name,seed,password)
         click.echo(wallet)
-    except DuplicateNameError:
-        click.echo('a wallet with the same name exists. try another name')
-    except DuplicateAddressError:
-        click.echo('a wallet with the same address exists. try another seed')
-    except DuplicateWalletError:
-        click.echo('the wallet already exists.')
-    except InvalidSeedError:
-        click.echo('seed is invalid.')
+    except WalletManagerError as e:
+        click.echo(e)
