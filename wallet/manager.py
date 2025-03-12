@@ -1,7 +1,7 @@
 import binascii
 import json
-from ossaudiodev import control_labels
 
+from wallet.message import Message, Msgs
 from wallet.store import DataBase
 from wallet.wallet import XWallet
 from wallet.encryption import (
@@ -9,27 +9,7 @@ from wallet.encryption import (
     decrypt
 )
 
-
-class WalletManagerError(Exception):
-    pass
-
-class DuplicateNameError(WalletManagerError):
-    pass
-
-class DuplicateAddressError(WalletManagerError):
-    pass
-
-class DuplicateWalletError(WalletManagerError):
-    pass
-
-class WalletNotFoundError(WalletManagerError):
-    pass
-
-class WrongPasswordError(WalletManagerError):
-    pass
-
-class InvalidSeedError(WalletManagerError):
-    pass
+from wallet.exception import WalletException
 
 
 class WalletManager:
@@ -38,27 +18,37 @@ class WalletManager:
 
     def save_wallet(self,wallet:XWallet,name:str,password:str):
         if self._db.exist(f'{name}_*'):
-            raise DuplicateNameError
+            raise WalletException(
+                Message(Msgs.DuplicateWalletName,'red')
+            )
         if self._db.exist(f'*_{wallet.address_hash[0:6]}'):
-            raise DuplicateAddressError
+            raise WalletException(
+                Message(Msgs.DuplicateWalletAddress,'red')
+            )
 
         data = wallet.to_dict()
         data['private_key'] = encrypt(data['private_key'],password).hex()
     
         file_name = f'{name}_{wallet.address_hash[0:6]}'
         if not self._db.create(file_name,json.dumps(data)):
-            raise DuplicateWalletError
+            raise WalletException(
+                Message(Msgs.WalletExist,'red')
+            )
             
 
     def load_wallet(self,name:str,password:str) -> XWallet:
         content = self._db.read(f'{name}_*')
         if not content:
-            raise WalletNotFoundError
+            raise WalletException(
+                Message(Msgs.WalletNotFound,'red')
+            )
 
         wallet_json = json.loads(content)
         pv = decrypt(binascii.unhexlify(wallet_json['private_key']),password)
         if not pv : 
-            raise WrongPasswordError
+            raise WalletException(
+                Message(Msgs.InvalidPassword,'red')
+            )
         
         wallet_json['private_key'] = pv
         return XWallet.from_dict(wallet_json) 
@@ -67,7 +57,9 @@ class WalletManager:
         try:
             wallet = XWallet.from_seed(family_seed)
         except:
-            raise InvalidSeedError
+            raise WalletException(
+                Message(Msgs.InvalidSeed,'red')
+            )
         self.save_wallet(wallet,name,password)
         return wallet
 

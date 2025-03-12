@@ -3,10 +3,9 @@ import click
 
 from wallet.store import DataBase
 
-from wallet.manager import (
-    WalletManager,
-    WalletManagerError,
-)
+from wallet.manager import WalletManager
+from wallet.exception import WalletException
+
 
 from wallet.wallet import XWallet
 
@@ -26,8 +25,8 @@ def wallet_generate(manager: WalletManager,wallet_name:str,password:str):
     wallet = XWallet.create()
     try:
         manager.save_wallet(wallet,wallet_name,password)
-    except WalletManagerError as e:
-        click.echo(e)
+    except WalletException as e:
+        e.print()
  
 
 @cli.command()
@@ -38,8 +37,8 @@ def wallet_show(manager: WalletManager,wallet_name:str,password:str):
     try:
         wallet = manager.load_wallet(wallet_name,password)
         print(wallet)
-    except WalletManagerError as e:
-        click.echo(e)
+    except WalletException as e:
+        e.print()
 
 
 # TODO: handle importing secret numbers,private keys, and mnemonic phrases
@@ -53,5 +52,5 @@ def wallet_import(manager: WalletManager,wallet_name:str,seed:str,password:str):
     try:
         wallet = manager.import_wallet(wallet_name,seed,password)
         click.echo(wallet)
-    except WalletManagerError as e:
-        click.echo(e)
+    except WalletException as e:
+        e.print()
