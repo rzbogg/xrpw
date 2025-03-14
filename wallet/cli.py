@@ -1,10 +1,8 @@
-from pathlib import Path
 import click
 
 from wallet.config import get_default_config
 from wallet.message import Message, Msgs
 from wallet.output import print_message
-from wallet.store import DataBase
 
 from wallet.manager import WalletManager
 from wallet.exception import WalletException

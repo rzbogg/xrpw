@@ -8,4 +8,4 @@ class WalletException(Exception):
         self.msg = msg
 
     def print(self):
-        print_message(self.msg)
+        print_message(self.msg,stderr=True)
