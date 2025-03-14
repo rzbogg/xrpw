@@ -16,6 +16,12 @@ class Msgs(Enum):
     InvalidEncryptionMethod = 'the encryption method in the json content in invalid'
     # 
     SuccesfulWalletGeneration = 'a wallet has been succesfully generated.'
+    SuccesfulTestnetWalletGeneration = 'a testnet wallet has been succesfully generated.'
+    # account
+    InactiveAccount = 'Account is not activated on xrp ledger. please deposit 1 xrp to activate it'
+    # transaction
+    InvalidRecipientAddress = 'recepient address is invalid'
+    TransactionFailed = 'Transaction failed!'
 
 class Message(NamedTuple):
     text: str|Msgs

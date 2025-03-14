@@ -1,19 +1,15 @@
 from binascii import unhexlify
 import hashlib
 import json
-from mailbox import Message
 
-from cryptography.fernet import InvalidToken
-from xrpl.wallet import Wallet
+from xrpl.wallet import Wallet, generate_faucet_wallet
 from xrpl.constants import CryptoAlgorithm
+from xrpl.clients.sync_client import SyncClient
 
 from wallet.encryption import (
     EncryptionBase,
-    EncryptionFernet,
     get_encryption_method
 )
-from wallet.exception import WalletException
-from wallet.message import Msgs
 
 
 class XWallet(Wallet):
@@ -46,7 +42,7 @@ class XWallet(Wallet):
         js = json.loads(content)
         method = get_encryption_method(js['encryption_method'])
         pk_bytes = unhexlify(js['private_key'])
-        js['private_key'] = method.decrypt(pk_bytes,password)
+        js['private_key'] = method.decrypt(pk_bytes,password).decode()
         return XWallet.from_dict(js)
 
     @classmethod
@@ -56,3 +52,12 @@ class XWallet(Wallet):
             private_key = d['private_key'],
         )
     
+    @classmethod
+    def create_testnet(cls,client:SyncClient):
+        wallet = generate_faucet_wallet(client)
+        return cls(
+            wallet.public_key,
+            wallet.private_key,
+        ) 
+
+
