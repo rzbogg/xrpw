@@ -4,12 +4,11 @@ import json
 from wallet.message import Message, Msgs
 from wallet.store import DataBase
 from wallet.wallet import XWallet
-from wallet.encryption import (
-    encrypt,
-    decrypt
-)
 
 from wallet.exception import WalletException
+from wallet.encryption import (
+        EncryptionFernet
+)
 
 
 class WalletManager:
@@ -26,11 +25,10 @@ class WalletManager:
                 Message(Msgs.DuplicateWalletAddress,'red')
             )
 
-        data = wallet.to_dict()
-        data['private_key'] = encrypt(data['private_key'],password).hex()
+        content = wallet.encrypt(password,EncryptionFernet())
     
         file_name = f'{name}_{wallet.address_hash[0:6]}'
-        if not self._db.create(file_name,json.dumps(data)):
+        if not self._db.create(file_name,content):
             raise WalletException(
                 Message(Msgs.WalletExist,'red')
             )
@@ -42,16 +40,8 @@ class WalletManager:
             raise WalletException(
                 Message(Msgs.WalletNotFound,'red')
             )
-
-        wallet_json = json.loads(content)
-        pv = decrypt(binascii.unhexlify(wallet_json['private_key']),password)
-        if not pv : 
-            raise WalletException(
-                Message(Msgs.InvalidPassword,'red')
-            )
+        return XWallet.decrypt(content,password) 
         
-        wallet_json['private_key'] = pv
-        return XWallet.from_dict(wallet_json) 
 
     def import_wallet(self,name:str,family_seed:str,password:str):
         try:

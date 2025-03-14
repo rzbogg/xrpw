@@ -1,6 +1,8 @@
 from pathlib import Path
 import click
 
+from wallet.message import Message, Msgs
+from wallet.output import print_message
 from wallet.store import DataBase
 
 from wallet.manager import WalletManager
@@ -25,6 +27,7 @@ def wallet_generate(manager: WalletManager,wallet_name:str,password:str):
     wallet = XWallet.create()
     try:
         manager.save_wallet(wallet,wallet_name,password)
+        print_message(Message(Msgs.SuccesfulWalletGeneration,'green'))
     except WalletException as e:
         e.print()
  
@@ -54,3 +57,4 @@ def wallet_import(manager: WalletManager,wallet_name:str,seed:str,password:str):
         click.echo(wallet)
     except WalletException as e:
         e.print()
+

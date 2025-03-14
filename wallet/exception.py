@@ -1,5 +1,5 @@
 from wallet.message import Message
-from wallet.output import print_error
+from wallet.output import print_message
 from rich import get_console
 
 class WalletException(Exception):
@@ -8,4 +8,4 @@ class WalletException(Exception):
         self.msg = msg
 
     def print(self):
-        print_error(self.msg)
+        print_message(self.msg)

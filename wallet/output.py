@@ -2,7 +2,7 @@ from rich.console import Console
 
 from wallet.message import Message
 
-def print_error(msg:Message):
+def print_message(msg:Message):
     console = _get_console(stderr=True)
     console.print(msg.text,style=msg.color)
 
