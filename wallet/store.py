@@ -1,13 +1,17 @@
 from pathlib import Path
-import json
 
 class DataBase:
-    def __init__(self,store_path:Path) -> None:
+    def __init__(self,path:str) -> None:
+        self.path_str:str = path
+        self.store_path:Path = self._setup_path()
+
+    def _setup_path(self) -> Path:
+        store_path = Path(self.path_str)
         if store_path.exists() and not store_path.is_dir():
             raise ValueError('provide a directory')
         if not store_path.exists():
             store_path.mkdir()
-        self.store_path: Path = store_path
+        return store_path
 
 
     def create(self,file_name:str,content:str) -> bool:

@@ -1,6 +1,7 @@
 from pathlib import Path
 import click
 
+from wallet.config import get_default_config
 from wallet.message import Message, Msgs
 from wallet.output import print_message
 from wallet.store import DataBase
@@ -15,8 +16,7 @@ from wallet.wallet import XWallet
 @click.group()
 @click.pass_context
 def cli(ctx):
-    p = Path('~/.wallet_xrp')
-    ctx.obj = WalletManager(DataBase(p.expanduser().resolve()))
+    ctx.obj = WalletManager(get_default_config())
 
 
 @cli.command()
