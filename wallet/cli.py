@@ -1,12 +1,13 @@
 import click
 
-from wallet.config import Config, get_default_config,get_default_config_testnet
+from wallet.config import get_default_config_testnet
 from wallet.message import Message, Msgs
-from wallet.output import print_message
 from wallet.manager import WalletManager
 from wallet.exception import WalletException
+from wallet.output import print_message
+from wallet.prompt import confirm, get_wallet_password
+from wallet.transaction import payment_overview
 
-from wallet.wallet import XWallet
 
 
 @click.group()
@@ -18,18 +19,19 @@ def cli(ctx):
 
 @cli.command()
 @click.argument('wallet-name')
-@click.argument('password')
+@click.option('-p','--password',type=str,required=True, help='password for your wallet')
 @click.pass_obj
 def wallet_generate(manager: WalletManager,wallet_name:str,password:str):
     try:
         manager.generate_wallet(wallet_name,password)
+    except WalletException as e:
+        e.print()
+    else:
         if manager.config.dev:
             print_message(Message(Msgs.SuccesfulTestnetWalletGeneration,'green'))
             return
         print_message(Message(Msgs.SuccesfulWalletGeneration,'green'))
 
-    except WalletException as e:
-        e.print()
  
 
 @cli.command()
@@ -39,9 +41,11 @@ def wallet_generate(manager: WalletManager,wallet_name:str,password:str):
 def wallet_show(manager: WalletManager,wallet_name:str,password:str):
     try:
         wallet = manager.load_wallet(wallet_name,password)
-        print(wallet)
     except WalletException as e:
         e.print()
+    else:
+        print(wallet)
+
 
 
 # TODO: handle importing secret numbers,private keys, and mnemonic phrases
@@ -54,22 +58,24 @@ def wallet_show(manager: WalletManager,wallet_name:str,password:str):
 def wallet_import(manager: WalletManager,wallet_name:str,seed:str,password:str):
     try:
         wallet = manager.import_wallet(wallet_name,seed,password)
-        click.echo(wallet)
     except WalletException as e:
         e.print()
+    else:
+        click.echo(wallet)
+
 
 
 @cli.command()
 @click.argument('wallet-name')
-@click.option('-p','--password',type=str,required=True, help='password for your wallet')
+@click.option('-p','--password',type=str,required=False, help='password for your wallet')
 @click.pass_obj
 def account_info(manager: WalletManager, wallet_name:str, password:str):
     try:
         m = manager.account_into(wallet_name,password)
-        print_message(m)
     except WalletException as e:
         e.print()
-
+    else:
+        print_message(m)
 
 
 @cli.command()
@@ -78,7 +84,7 @@ def account_info(manager: WalletManager, wallet_name:str, password:str):
 @click.option('-r','--recipient',type=str,required=True, help='recipient for the transaction')
 @click.option('-a','--amount',type=str,required=True, help='xrp amount to send')
 @click.pass_obj
-def send_tx(
+def send(
     manager: WalletManager, 
     wallet_name:str, 
     password:str, 
@@ -86,8 +92,35 @@ def send_tx(
     amount:str
 ):
     try:
-        p = manager.send_tx(wallet_name,password,recipient,amount)
-        print_message(p)
+        payment = manager.create_payment(
+            wallet_name,
+            password,
+            recipient,
+            amount,
+        )
+        click.echo(
+            payment_overview(payment)
+        )
+        if not confirm('do you want to proceed?'):
+            return
+        confirm_password = get_wallet_password('sign it with password')
+        manager.authenticate(wallet_name,confirm_password)
+        m = manager.send_payment(payment)
+
     except WalletException as e:
         e.print()
+    else:
+        print_message(m)
 
+@cli.command()
+@click.argument('wallet-name')
+@click.option('-p','--password',type=str,required=True, help='password for your wallet')
+@click.option('-qr',type=str,required=True, help='password for your wallet')
+@click.pass_obj
+def receive(manager: WalletManager,wallet_name:str, password:str):
+    try:
+        info = manager.receive_info(wallet_name,password)
+    except WalletException as e:
+        e.print()
+    else:
+        print(info)

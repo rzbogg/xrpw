@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import NamedTuple
 
+
 class Msgs(Enum):
 
     def __str__(self) -> str:
@@ -26,8 +27,4 @@ class Msgs(Enum):
 class Message(NamedTuple):
     text: str|Msgs
     color: str
-
-
-
-
 

@@ -1,7 +1,5 @@
-from xrpl.clients.sync_client import SyncClient
-from xrpl.models.transactions import Payment
-from xrpl.core.addresscodec import is_valid_classic_address 
-from xrpl.transaction import autofill_and_sign,autofill, submit
+from xrpl.models.transactions import Transaction
+from xrpl.transaction import submit
 
 from wallet.config import Config
 from wallet.message import Message, Msgs
@@ -64,19 +62,34 @@ class WalletManager:
         self.save_wallet(wallet,name,password)
         return wallet
 
-
     def account_into(self,name:str,password:str) -> Message:
         wallet = self.load_wallet(name,password)
         account = Account(wallet.address,self.config.xrpl_api)
         return account.account_info()
 
-    def send_tx(self,name:str,password:str,recipient:str,amount:str):
+    def create_payment(self,name:str,password:str,recipient:str,amount:str):
         wallet = self.load_wallet(name,password)
-        # signed tx
-        tx = build_payment_tx(wallet,recipient,amount,self.config.xrpl_api)
+        return build_payment_tx(wallet,recipient,amount,self.config.xrpl_api)
+
+    def send_payment(self,tx:Transaction):
         r = submit(tx,self.config.xrpl_api)
         if not r.result.get('accepted'):
             raise WalletException(
                 Message(Msgs.TransactionFailed,'red')
             )
-        return Message(f"Transaction completed: #{r.result['tx_json']['hash']}",'green')
+        return Message(f"Transaction completed: {r.result['tx_json']['hash']}",'green')
+    
+    def create_and_send_payment(self,name:str,password:str,recipient:str,amount:str):
+        payment = self.create_payment(name,password,recipient,amount)
+        return self.send_payment(payment)
+
+    def wallet_exist(self,name:str) -> bool:
+        return self._db.exist(name)
+
+    def authenticate(self,name:str,password:str):
+        _ = self.load_wallet(name,password)
+
+    def receive_info(self,name:str,password:str) -> str:
+        wallet = self.load_wallet(name,password)
+        return f'''Address: {wallet.address}
+'''

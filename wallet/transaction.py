@@ -1,7 +1,9 @@
 from xrpl.clients.sync_client import SyncClient
 from xrpl.core.addresscodec.codec import is_valid_classic_address
-from xrpl.models.transactions import Payment 
+from xrpl.models.transactions import Payment
 from xrpl.transaction import autofill_and_sign 
+from xrpl.utils import drops_to_xrp
+
 
 from wallet.exception import WalletException
 from wallet.message import Message, Msgs
@@ -19,3 +21,15 @@ def build_payment_tx(sender: XWallet, recipient: str, amount:str,client:SyncClie
         client,
         sender,
     )
+
+def payment_overview(payment:Payment):
+    sender = payment.account
+    receiver = payment.destination
+    tag = payment.destination_tag
+    amount = payment.amount
+    fee = payment.fee 
+    return f'''From: {sender}
+To: {receiver}
+Amount: {drops_to_xrp(str(amount))} XRP
+Fee : {drops_to_xrp(fee) if fee is not None else ''} XRP
+'''
