@@ -1,8 +1,10 @@
-from xrpl.models.transactions import Transaction
+from xrpl.core.addresscodec import classic_address_to_xaddress
+from xrpl.models.transactions import Transaction 
 from xrpl.transaction import submit
 
 from wallet.config import Config
 from wallet.message import Message, Msgs
+from wallet.qrcode import create_and_open_qrcode
 from wallet.store import DataBase
 from wallet.transaction import build_payment_tx
 from wallet.wallet import XWallet
@@ -67,9 +69,9 @@ class WalletManager:
         account = Account(wallet.address,self.config.xrpl_api)
         return account.account_info()
 
-    def create_payment(self,name:str,password:str,recipient:str,amount:str):
+    def create_payment(self,name:str,password:str,recipient:str,amount:str,tag: int | None = None):
         wallet = self.load_wallet(name,password)
-        return build_payment_tx(wallet,recipient,amount,self.config.xrpl_api)
+        return build_payment_tx(wallet,recipient,amount,self.config.xrpl_api,tag=tag)
 
     def send_payment(self,tx:Transaction):
         r = submit(tx,self.config.xrpl_api)
@@ -89,7 +91,12 @@ class WalletManager:
     def authenticate(self,name:str,password:str):
         _ = self.load_wallet(name,password)
 
-    def receive_info(self,name:str,password:str) -> str:
+    def info_recieve(self,name:str, password:str,tag: int | None = None, qr: bool = False):
         wallet = self.load_wallet(name,password)
-        return f'''Address: {wallet.address}
-'''
+        result = f'Classic address: {wallet.address}'
+        if tag:
+            x_address = classic_address_to_xaddress(wallet.address,tag,is_test_network = True if self.config.dev else False)
+            result += f'\nX-Address: {x_address}'
+        if qr:
+            create_and_open_qrcode(wallet.address)
+        return result

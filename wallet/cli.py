@@ -83,13 +83,15 @@ def account_info(manager: WalletManager, wallet_name:str, password:str):
 @click.option('-p','--password',type=str,required=True, help='password for your wallet')
 @click.option('-r','--recipient',type=str,required=True, help='recipient for the transaction')
 @click.option('-a','--amount',type=str,required=True, help='xrp amount to send')
+@click.option('-t','--tag',type=int,required=False, help='destination tag')
 @click.pass_obj
 def send(
     manager: WalletManager, 
     wallet_name:str, 
     password:str, 
     recipient:str,
-    amount:str
+    amount:str,
+    tag: int | None = None
 ):
     try:
         payment = manager.create_payment(
@@ -97,6 +99,7 @@ def send(
             password,
             recipient,
             amount,
+            tag = tag
         )
         click.echo(
             payment_overview(payment)
@@ -106,7 +109,6 @@ def send(
         confirm_password = get_wallet_password('sign it with password')
         manager.authenticate(wallet_name,confirm_password)
         m = manager.send_payment(payment)
-
     except WalletException as e:
         e.print()
     else:
@@ -115,12 +117,13 @@ def send(
 @cli.command()
 @click.argument('wallet-name')
 @click.option('-p','--password',type=str,required=True, help='password for your wallet')
-@click.option('-qr',type=str,required=True, help='password for your wallet')
+@click.option('-t','--tag',type=int,required=False, help='destination tag')
+@click.option('-qr',is_flag=True, help='show qr code')
 @click.pass_obj
-def receive(manager: WalletManager,wallet_name:str, password:str):
+def receive(manager: WalletManager,wallet_name:str, password:str,tag: int | None, qr: bool):
     try:
-        info = manager.receive_info(wallet_name,password)
+        address = manager.info_recieve(wallet_name,password,qr=True if qr else False,tag=tag)
     except WalletException as e:
         e.print()
     else:
-        print(info)
+        print(address)
